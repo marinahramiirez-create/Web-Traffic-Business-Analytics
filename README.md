@@ -184,6 +184,7 @@ Variance: 68.61 | Dispersion Index: 11.89
 ![Comparación Día](images/ex3_Dia.png)
 
 ![Comparación Noche](images/ex3_Noche.png)
+
 ```
 
 **3.4 Model Justification:**
