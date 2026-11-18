@@ -78,6 +78,7 @@ hora
 23          24.48   24.78      23.97   24.25    24.80   12.07    11.67
 ```
 ![Connections](ex1_connections.png)
+![Mean connections by day and hour](ex1_pivot.png)
 
 **1.2 Interpretation of Results:**
 
