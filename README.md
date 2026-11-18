@@ -47,6 +47,35 @@ plt.xlabel("Hour of the day")
 plt.ylabel("Mean connections")
 plt.grid(True, alpha=0.3)
 plt.show()
+
+
+Pivot Table (Mean connections):
+dia_semana  lunes  martes  miércoles  jueves  viernes  sábado  domingo
+hora                                                                  
+0            1.85    1.93       1.95    2.05     2.03    1.87     2.17
+1            2.17    1.75       1.60    2.33     2.17    2.20     1.93
+2            2.03    1.93       1.63    1.97     2.10    1.80     2.07
+3            2.27    1.78       1.98    2.08     2.12    2.23     1.85
+4            2.30    2.03       2.10    1.90     1.68    2.08     2.22
+5            2.28    2.08       1.78    2.15     2.23    1.70     2.18
+6            1.87    1.75       2.30    1.85     2.03    2.07     1.93
+7            2.22    2.02       2.23    1.85     2.00    1.98     2.17
+8           23.67   24.50      24.43   23.53    23.60   12.32    11.93
+9           24.78   24.43      23.60   24.50    23.72   11.68    12.73
+10          23.60   23.65      23.75   23.75    25.03   11.42    11.90
+11          23.93   24.57      23.43   24.05    25.20   12.02    11.28
+12          24.52   23.05      23.40   24.57    24.40   11.52    12.02
+13          23.55   23.90      22.78   24.12    24.07   12.73    11.82
+14          23.23   23.77      23.48   24.22    24.78   11.47    12.40
+15          24.13   23.58      23.62   23.02    24.88   11.87    12.20
+16          24.50   23.50      23.55   24.50    23.78   12.67    12.52
+17          23.33   24.27      23.15   24.93    24.48   11.63    12.00
+18          24.37   23.53      23.48   24.60    23.97   12.02    12.48
+19          23.62   23.93      24.45   23.80    24.18   12.23    12.70
+20          23.35   25.70      22.95   24.72    23.52   11.75    11.75
+21          23.15   23.53      23.58   23.48    24.32   11.57    12.18
+22          24.20   24.10      23.98   24.62    23.82   12.25    11.95
+23          24.48   24.78      23.97   24.25    24.80   12.07    11.67
 ```
 
 **1.2 Interpretation of Results:**
@@ -81,6 +110,10 @@ plt.xlabel("Connections per minute")
 plt.ylabel("Proportion")
 plt.legend()
 plt.show()
+
+Estimate of λ (mean): 14.39
+Variance: 110.67
+Dispersion index: 7.69
 ```
 
 **2.2 Model Evaluation:**
@@ -132,6 +165,18 @@ z3, p3 = test_z(h8, h18)
 print(f"1. Night (Weekday vs Weekend) -> Z: {z1:.2f} | p-value: {p1:.4e}")
 print(f"2. Day (Weekday vs Weekend)   -> Z: {z2:.2f} | p-value: {p2:.4e}")
 print(f"3. Day (Hours 8h vs 18h)      -> Z: {z3:.2f} | p-value: {p3:.4e}")
+
+--- Period: Dia ---
+Estimated lambda: 20.55 | 95% CI: [20.43, 20.67]
+Variance: 49.69 | Dispersion Index: 2.42
+
+--- Period: Noche ---
+Estimated lambda: 5.77 | 95% CI: [5.7, 5.84]
+Variance: 68.61 | Dispersion Index: 11.89
+
+1. Night (Weekday vs Weekend) -> Z: 33.00 | p-value: 7.0825e-239
+2. Day (Weekday vs Weekend)   -> Z: 105.18 | p-value: 0.0000e+00
+3. Day (Hours 8h vs 18h)      -> Z: -0.21 | p-value: 8.3145e-01
 ```
 
 **3.4 Model Justification:**
@@ -189,6 +234,14 @@ while stats.poisson.sf(40, lam_critico) < target_min:
     lam_critico += 0.01
 
 print(f"Critical λ to have ≥10 saturated min/day: {lam_critico:.2f} connections/min")
+
+Expected per week (Segmented Model): 0.27 min
+Actual observed: 4 min
+P(at least 1 min > 40 on a weekday): 0.5520
+Expected per week (Global Model): 0.000078 min
+Provider Test (H0=23) -> observed λ: 23.96 | Z: 12.94 | p-value: 2.6564e-38
+Expected (+20% traffic): 9.42 min/week
+Critical λ to have ≥10 saturated min/day: 27.92 connections/min
 ```
 
 **4.5 Infrastructure Interpretation:**
@@ -238,6 +291,13 @@ z_b, p_b = test_dos_proporciones(g_dia_lab["aceptan_cookies"].sum(), g_dia_lab["
 
 print(f"\nTest (a) Day vs Night -> Z: {z_a:.2f} | p-value: {p_a:.4e}")
 print(f"Test (b) Weekday vs Weekend (Day) -> Z: {z_b:.2f} | p-value: {p_b:.4e}")
+
+
+Period Dia: Rate = 0.7977 (95% CI: [0.7954, 0.7999])
+Period Noche: Rate = 0.8047 (95% CI: [0.7997, 0.8097])
+
+Test (a) Day vs Night -> Z: -2.49 | p-value: 1.2821e-02
+Test (b) Weekday vs Weekend (Day) -> Z: 0.14 | p-value: 8.9209e-01
 ```
 
 ## 6. Business Conclusions
