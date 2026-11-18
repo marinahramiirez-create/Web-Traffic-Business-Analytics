@@ -181,6 +181,7 @@ Variance: 68.61 | Dispersion Index: 11.89
 2. Day (Weekday vs Weekend)   -> Z: 105.18 | p-value: 0.0000e+00
 3. Day (Hours 8h vs 18h)      -> Z: -0.21 | p-value: 8.3145e-01
 
+
 ![Comparación Día](images/ex3_Dia.png)
 
 ![Comparación Noche](images/ex3_Noche.png)
