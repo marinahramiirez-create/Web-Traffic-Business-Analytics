@@ -117,6 +117,7 @@ Estimate of λ (mean): 14.39
 Variance: 110.67
 Dispersion index: 7.69
 ```
+![Observed vs Poisson](ex2_poisson.png)
 
 **2.2 Model Evaluation:**
 
