@@ -77,6 +77,7 @@ hora
 22          24.20   24.10      23.98   24.62    23.82   12.25    11.95
 23          24.48   24.78      23.97   24.25    24.80   12.07    11.67
 ```
+![Connections](ex1_connections.png)
 
 **1.2 Interpretation of Results:**
 
