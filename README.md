@@ -101,7 +101,7 @@ Total de minutos con más de 40 conexiones: 4
 6816	2026-11-06	viernes	      17	   36	     41	            33
 
 ```
-![Connections](ex1_connections.png)
+![Connections](ex1_conexiones1.png)
 ![Mean connections by day and hour](ex1_pivot.png)
 
 **1.2 Interpretation of Results:**
@@ -150,7 +150,14 @@ plt.ylabel("Proporción de minutos")
 plt.legend()
 plt.show()
 
-![Observed vs Poisson](ex2_poisson.png)
+Consola:
+
+![Observed vs Poisson](ex2_poisson2.png)
+
+Estimación de λ (media): 14.39
+Varianza: 110.67
+Índice de dispersión: 7.69
+
 
 **2.2 Model Evaluation:**
 
@@ -272,9 +279,13 @@ for periodo, grupo in df.groupby("periodo"): # df.groupby("periodo") --> separa 
     plt.show()
 
 ```
-![Comparación Día](ex3_Dia.png)
+![Comparación Día](ex3_poisson3.png)
 
-![Comparación Noche](ex3_Noche.png)
+![Comparación Día](ex3_poisson4.png)
+
+![Comparación Noche](ex3_poisson5.png)
+
+![Comparación Noche](ex3_poisson6.png)
 
 
 **3.3 Usa el test Z de dos muestras de la sección 1.7 para comprobar con datos cómo has definido los periodos:**
