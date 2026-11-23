@@ -656,23 +656,19 @@ Día Laborable vs Día Finde: Z = -0.34, p-valor = 0.7306
 
 ## 6. Business Conclusions
 
-1. Recommendations for the Infrastructure Team (Server Overload Risk)Capacity:
+## 1. Recommendations for the Infrastructure Team (Server Overload Risk)Capacity:
 - The current server crashes when exceeding 40 connections/minute.
 - Overall traffic: The weekly average is 14.28 users/min (95% CI: [14.08, 14.48]). Overall, the risk of overload is virtually non-existent.
 - Peak hours (10:00 AM to 2:00 PM): Traffic increases to 34.85 users/min. In this window, the probability of overloading the server in any given minute is 16.14% ($\approx$ 38 to 40 minutes per day of downtime/slowness).
 - Decision: Upgrade to a higher-capacity server or implement auto-scaling from 10:00 AM to 2:00 PM.
 
-2. Recommendations for the Marketing Team (Cookie Acceptance)
+## 2. Recommendations for the Marketing Team (Cookie Acceptance)
 - Overall rate: 74.87% of users accept cookies (95% CI: [74.56%, 75.18%]).
 - User behavior: There are no significant differences between mornings (74.92%) and afternoons/evenings (74.83%), nor between weekdays (74.89%) and weekends (74.82%). The rate remains constant at around 75%.
 - Decision: No differentiated strategies or banners by time or day are required. Marketing efforts should focus on increasing total traffic.
 
-3. Limitations of the Analysis
+## Analysis Assumptions and Limitations
 - Assumption of visit independence (Poisson): The model assumes connections occur randomly and independently. In practice, mass actions like newsletters or social media mentions can cause simultaneous "spikes" (overdispersion), further increasing the risk of overload.
 - Restricted temporal representativeness: The study only analyzes the week of November 2 to 8, 2026. It does not account for seasonal biases (Christmas, Black Friday, holidays) or long-term growth trends.
 - Absence of UI design variables: It is assumed that the 75% acceptance rate is a stable user trait, ignoring whether changes to the position, copy, or colors of the cookie banner could alter that percentage.
 
-## Analysis Assumptions and Limitations
-
-- **Temporal independence:** Minute-to-minute independence has been assumed, although the real data show autocorrelation during peak hours.
-- **Seasonality:** The sample covers a single week of the year; multi-month data would be needed to control for holidays and sector-specific seasonality.
