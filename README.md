@@ -26,28 +26,42 @@ df = pd.read_csv("https://raw.githubusercontent.com/ami232/nebrija-mpan/main/dat
 ### 1. Data Exploration
 
 ```python
-# 1.1 Minute-by-minute connections plot
-plt.figure(figsize=(12, 4))
-df["conexiones"].plot(color="blue", lw=1)
-plt.title("Minute-by-minute connections throughout the week")
-plt.xlabel("Time (minutes)")
-plt.ylabel("Connections")
-plt.grid(True, alpha=0.3)
-plt.show()
+# TODO: gráfico de las conexiones minuto a minuto durante la semana
 
-# Mean connections per minute by day of the week and hour
+import pandas as pd
+import matplotlib.pyplot as plt
+df = pd.read_csv("https://raw.githubusercontent.com/ami232/nebrija-mpan/main/data/conexiones_web.csv")
+
+df["conexiones"].plot(figsize=(12,4), color="blue", lw=1) # plot (trasforma los números del gráfico en líneas) y figsize=(12,4) indica el acho y la altura del gráfico, respectivamente.
+plt.axhline(
+    y=40, color="red", linestyle="--", label="Límite de saturación (40)"
+    )
+plt.legend()
+plt.title("Conexiones minuto a minuto") # plt.title es para que aparezca en la parte superior del gráfico a modo de título
+plt.xlabel("Día de la semana") # xlabel sirve para etiqueta de x
+plt.ylabel("conexiones por minuto") # ylabel sirve para etiqueta de y
+plt.show() # plt.show es para plasmar el gráfico en la consola
+
+# TODO: media de conexiones por minuto de cada día y cada hora (tabla y gráfico)
+
+# Tabla pivote
+         # Horas como filas, días de la semana como columnas, values hace que se rellene la tabla con los datos de las conexiones y aggfunc="mean" calcula la media de dichas conexiones
+orden_dias = ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"]
 tabla_pivot = df.pivot_table(index="hora", columns="dia_semana", values="conexiones", aggfunc="mean")
-print("Pivot Table (Mean connections):")
-print(tabla_pivot)
+tabla_pivot = tabla_pivot.reindex(columns=orden_dias)
+display(tabla_pivot.round(2)) # Muestra la tabla en Colab
 
-# Line plot by day
-tabla_pivot.plot(figsize=(10, 5), marker="o", lw=1)
-plt.title("Mean connections per minute by day and hour")
-plt.xlabel("Hour of the day")
-plt.ylabel("Mean connections")
-plt.grid(True, alpha=0.3)
+# Gráfico de la tabla pivote
+tabla_pivot.plot(figsize=(10,5), marker="o", lw=1) # Agrupa la tabla y crea un gráfico de líneas con 10 de ancho y 5 de alto, añadiendo el marcador "o" en cada cambio de hora. Lw=1 es el grosor de líneas (fino)
+plt.title("Media de conexiones por minuto de cada día y cada hora")
+plt.xlabel("Hora del día")
+plt.ylabel("Media de conexiones por minuto")
 plt.show()
 
+# Comprobación de minutos con más de 40 conexiones
+saturados = df[df["conexiones"]>40]
+print(f"Total de minutos con más de 40 conexiones: {len(saturados)}")
+display(saturados)
 
 Pivot Table (Mean connections):
 dia_semana  lunes  martes  miércoles  jueves  viernes  sábado  domingo
@@ -76,6 +90,16 @@ hora
 21          23.15   23.53      23.58   23.48    24.32   11.57    12.18
 22          24.20   24.10      23.98   24.62    23.82   12.25    11.95
 23          24.48   24.78      23.97   24.25    24.80   12.07    11.67
+
+
+Total de minutos con más de 40 conexiones: 4
+
+        fecha	    dia_semana	 hora	 minuto	conexiones	aceptan_cookies
+2645	2026-11-03	martes      	20	   5	     42	            33
+3445	2026-11-04	miércoles	     9	   25	     41	            34
+4299	2026-11-04	miércoles	    23	   39	     45	            32
+6816	2026-11-06	viernes	      17	   36	     41	            33
+
 ```
 ![Connections](ex1_connections.png)
 ![Mean connections by day and hour](ex1_pivot.png)
@@ -92,31 +116,40 @@ hora
 
 ```python
 # 2.1 Parameter estimation for the whole week
-lam_hat = round(df["conexiones"].mean(), 2)
-varianza = round(df["conexiones"].var(), 2)
-indice_dispersion = round(varianza / lam_hat, 2)
+# TODO: estimación de λ, varianza e índice de dispersión con todos los minutos
 
-print(f"Estimate of λ (mean): {lam_hat}")
-print(f"Variance: {varianza}")
-print(f"Dispersion index: {indice_dispersion}")
+import matplotlib.pyplot as plt
+import numpy as np
+from scipy.stats import poisson
 
-# Observed Frequencies vs Theoretical Poisson
-frecuencias_observadas = df["conexiones"].value_counts(normalize=True).sort_index()
+# Estimación de λ (varianza e índice de dispersión)
+lam_hat = round(df["conexiones"].mean(), 2) # lam_hat (estimación del parámetro λ). Con df seleccionamos la columna con todos los datos de conexiones por minuto de la tabla y hacemos la media ".mean()"
+varianza = round(df["conexiones"].var(), 2) # Realizamos la varianza de los datos redondeados a 2 decimales (round, 2)
+indice_dispersion = round(varianza / lam_hat, 2) # Fórmula del indice de dispersión: varianza entre la media estimada del parámetro λ.
 
-plt.figure(figsize=(10, 5))
-frecuencias_observadas.plot(kind="bar", alpha=0.5, label="Observed", color="blue")
-x = range(int(df["conexiones"].max()) + 1)
-plt.plot(x, poisson.pmf(x, lam_hat), color="red", lw=2, label=f"Theoretical Poisson (λ={lam_hat})")
-plt.title("Observed Frequencies vs Global Poisson Model")
-plt.xlabel("Connections per minute")
-plt.ylabel("Proportion")
+print("Estimación de λ (media):", lam_hat)
+print("Varianza:", varianza)
+print("Índice de dispersión:", indice_dispersion)
+
+# TODO: frecuencias observadas frente a Poisson(λ estimado)
+
+# Frecuencias observadas
+frecuencias_observadas = df["conexiones"].value_counts(normalize=True).sort_index() # .value_counts --> cuenta cuentas veces se repite cada valor, normalize=True --> Convierte dichos recuentos en porcentakes/proporciones y .sort_index() --> ordena los resultados de menos a mayor
+
+# Gráfico
+plt.figure(figsize=(10,5))
+frecuencias_observadas.plot(kind="bar", alpha=0.5, label="Frecuencias observadas", color="blue") # Coge los porcentajes  y dibuja un gráfico de barras (kind="bar") # alpha=0.5 50% de trasparencia del color de las barras
+
+x = range(int(df["conexiones"].max())+1) # range (secuencia de números que empieza por 0),int (convertir valor en número entero), .max (busca el número máximo de conexiones) y +1 (ya que range se para justo antes del número indicado, y así nos aseguramos de incluir el valor máximo)
+plt.plot(x, poisson.pmf(x, lam_hat), color="red", marker="o", label="Poisson(λ estimado)") # plt.plot coge dichos cálculos y los dibuja en un gráfico usando una lista de número. poisson.pmf (caclula prob de que ocurra cada cantidad de conexiones usando media estimada)
+
+plt.xticks(range(0, 46, 5), rotation=0) # Saltos de 5 en eje x
+plt.title("Frecuencias observadas frente a Poisson(λ estimado) de la semana")
+plt.xlabel("Conexiones por minutos")
+plt.ylabel("Proporción de minutos")
 plt.legend()
 plt.show()
 
-Estimate of λ (mean): 14.39
-Variance: 110.67
-Dispersion index: 7.69
-```
 ![Observed vs Poisson](ex2_poisson.png)
 
 **2.2 Model Evaluation:**
@@ -128,64 +161,193 @@ Dispersion index: 7.69
 
 ```python
 # 3.1 Day / Night segmentation
-df["periodo"] = np.where((df["hora"] >= 8) & (df["hora"] < 22), "Dia", "Noche")
+# TODO: define los periodos (columna nueva "periodo")
+
+import numpy as np
+import pandas as pd
+from scipy import stats
+df = pd.read_csv("https://raw.githubusercontent.com/ami232/nebrija-mpan/main/data/conexiones_web.csv")
+
+# Creamos una columna para separar el día de la noche (día = 8 am - 8 pm)
+
+fin_semana = df["dia_semana"].isin(["sábado", "domingo"])
+dia = (df["hora"] >= 8) & (df["hora"] < 20)
+
+condiciones = [
+    dia & (~fin_semana),
+    (~dia) & (~fin_semana),
+    dia & fin_semana,
+    (~dia) & (fin_semana),
+]
+
+etiquetas = [
+    "Dia - Dia laborable",
+    "Noche - Dia laborable",
+    "Dia - Fin de semana",
+    "Noche - Fin de semana",
+]
+df["periodo"] = np.select(condiciones, etiquetas, default="Otro")
+
+# TODO: para cada periodo, λ estimado, IC 95 %, varianza e índice de dispersión
+
+# Calculamos la media λ, la varianza y la dispersión de cada grupo
+
+resultados = []
+z = stats.norm.ppf(0.975) # stats.norm (distribución normal estándar) y .ppf() (funciçon de distribución acumulada inversa)
 
 for periodo, grupo in df.groupby("periodo"):
-    n = len(grupo)
-    lam_p = round(grupo["conexiones"].mean(), 2)
-    var_p = round(grupo["conexiones"].var(), 2)
-    disp_p = round(var_p / lam_p, 2)
-    se = np.sqrt(lam_p / n)
-    ic_lower = round(lam_p - 1.96 * se, 2)
-    ic_upper = round(lam_p + 1.96 * se, 2)
+  n =len(grupo)
+  lam_hat = round(grupo["conexiones"].mean(), 2)
+  varianza = round(grupo["conexiones"].var(),2)
+  indice_dispersion = round(varianza / lam_hat, 2)
 
-    print(f"--- Period: {periodo} ---")
-    print(f"Estimated lambda: {lam_p} | 95% CI: [{ic_lower}, {ic_upper}]")
-    print(f"Variance: {var_p} | Dispersion Index: {disp_p}\n")
+# Intervalo de confianza al 95%
 
-# 3.3 Z-tests to evaluate the segmentation
-def test_z(g1, g2):
-    n1, n2 = len(g1), len(g2)
-    l1, l2 = g1.mean(), g2.mean()
-    se = np.sqrt(l1 / n1 + l2 / n2)
-    z_stat = (l1 - l2) / se
-    p_val = 2 * stats.norm.sf(abs(z_stat))
-    return z_stat, p_val
+  se = np.sqrt(lam_hat / n) # Error estándar (se) de la media estimada
+  lam_hat_min = lam_hat - z * se
+  lam_hat_max = lam_hat + z * se
 
-# Tests
-noche_lab = df[(df["periodo"] == "Noche") & (~df["dia_semana"].isin(["sábado", "domingo"]))]["conexiones"]
-noche_fin = df[(df["periodo"] == "Noche") & (df["dia_semana"].isin(["sábado", "domingo"]))]["conexiones"]
-z1, p1 = test_z(noche_lab, noche_fin)
+  resultados.append({
+      "Periodo": periodo,
+      "Minutos": n,
+      "Lambda estimado (media)": lam_hat,
+      "IC 95% inferior": round(lam_hat - z * se, 2),
+      "IC 95% superior": round(lam_hat + z * se, 2),
+      "Varianza": varianza,
+      "Índice de dispersión": indice_dispersion,
+  })
 
-dia_lab = df[(df["periodo"] == "Dia") & (~df["dia_semana"].isin(["sábado", "domingo"]))]["conexiones"]
-dia_fin = df[(df["periodo"] == "Dia") & (df["dia_semana"].isin(["sábado", "domingo"]))]["conexiones"]
-z2, p2 = test_z(dia_lab, dia_fin)
+tabla_periodos = pd.DataFrame(resultados).set_index("Periodo")
+display(tabla_periodos.round(3))
 
-h8 = df[df["hora"] == 8]["conexiones"]
-h18 = df[df["hora"] == 18]["conexiones"]
-z3, p3 = test_z(h8, h18)
 
-print(f"1. Night (Weekday vs Weekend) -> Z: {z1:.2f} | p-value: {p1:.4e}")
-print(f"2. Day (Weekday vs Weekend)   -> Z: {z2:.2f} | p-value: {p2:.4e}")
-print(f"3. Day (Hours 8h vs 18h)      -> Z: {z3:.2f} | p-value: {p3:.4e}")
+Consola:  
+  
+    
+Periodo	             	Minutos	  Lambda estimado (media)	  IC 95% inferior	 IC 95% superior	Varianza	Índice de dispersión
+					
+Dia - Dia laborable	    3600	   23.98	                  23.82	            24.14	           24.16	   1.01
+Dia - Fin de semana   	1440	   12.06	                  11.88	            12.24	           11.69	   0.97
+Noche - Dia laborable  	3600	   9.36	                    9.26	            9.46	           117.86	   12.59
+Noche - Fin de semana 	1440	   5.32	                    5.20             	5.44	           27.26	   5.12
 
---- Period: Dia ---
-Estimated lambda: 20.55 | 95% CI: [20.43, 20.67]
-Variance: 49.69 | Dispersion Index: 2.42
 
---- Period: Noche ---
-Estimated lambda: 5.77 | 95% CI: [5.7, 5.84]
-Variance: 68.61 | Dispersion Index: 11.89
+**3.2 Para cada periodo, compara las frecuencias observadas con la Poisson estimada en un gráfico.**
 
-1. Night (Weekday vs Weekend) -> Z: 33.00 | p-value: 7.0825e-239
-2. Day (Weekday vs Weekend)   -> Z: 105.18 | p-value: 0.0000e+00
-3. Day (Hours 8h vs 18h)      -> Z: -0.21 | p-value: 8.3145e-01
+# TODO: frecuencias observadas frente a Poisson en cada periodo
+
+import matplotlib.pyplot as plt
+import numpy as np
+from scipy.stats import poisson
+
+for periodo, grupo in df.groupby("periodo"): # df.groupby("periodo") --> separa tabla en grupos de la columna periodo
+    datos_p = grupo["conexiones"] # Guarda en una variable solo los datos de conexiones del periodo concreto que se analiza
+    lam_hat = datos_p.mean() # Calcula media de lambda específica para ese periodo
+
+    plt.figure(figsize=(8, 4))
+
+    max_x = int(datos_p.max())
+    x_barras = np.arange(0, max_x + 1)
+
+    # Gráfico de barras con datos reales del periodo
+    frecuencias_observadas = (
+        grupo["conexiones"].value_counts(normalize=True).sort_index()
+    ) # Cuenta cuántas veces se repite cada número de conexiones y lo convierte en proporciones/porcentajes. Lo ordena de menor a mayor.
+
+    frecuencias_observadas.plot(kind="bar", alpha=0.5, color="blue", label="Observado") # Dibuja gráfico de barras, con trasparencia del color 50% representando la realidad de lo sucedido.
+
+    # Línea teórica de Poisson para este periodo
+    x = range(int(datos_p.max())+1) # range (recuencia de números desde el 0 hasta máx conexiones periodo). Caclula probabilidad teórica de la distribuciçon Poisson utilizando media lambda.
+    plt.plot(x, poisson.pmf(x, lam_hat), color="red", marker="o", label="Poisson estimado") # Dibuja trazo encima del gráfico para ver si coincide con el gráfico de barras.
+
+    limite_x = max(max_x, 40)
+    marcas = np.arange(0, limite_x + 1, 5)
+    plt.xticks(marcas, marcas, rotation=0)
+    plt.xlim(-0.5, limite_x + 0.5)
+
+    plt.title("Comparación para el periodo: " + periodo)
+    plt.xlabel("Conexiones por minuto")
+    plt.ylabel("Frecuencia relativa")
+    plt.legend()
+    plt.show()
 
 ```
 ![Comparación Día](ex3_Dia.png)
 
 ![Comparación Noche](ex3_Noche.png)
 
+
+**3.3 Usa el test Z de dos muestras de la sección 1.7 para comprobar con datos cómo has definido los periodos:**
+
+¿Es el ritmo de la noche el mismo entre semana que el fin de semana?
+¿Es el ritmo de día distinto entre semana y el fin de semana?
+Dentro del periodo con más tráfico, compara dos horas (por ejemplo, las 8 h y las 18 h). ¿Hay diferencias?
+
+import numpy as np
+import pandas as pd
+from scipy import stats
+df = pd.read_csv("https://raw.githubusercontent.com/ami232/nebrija-mpan/main/data/conexiones_web.csv")
+
+# Día: 8:00 a 23:59 y Noche: 0:00 a 7:59
+fin_semana = df["dia_semana"].isin(["sábado", "domingo"])
+dia = (df["hora"] >= 8) & (df["hora"] < 24)
+
+condiciones = [
+    dia & (~fin_semana),
+    (~dia) & (~fin_semana),
+    dia & fin_semana,
+    (~dia) & (fin_semana),
+]
+
+etiquetas = [
+    "Dia - Dia laborable",
+    "Noche - Dia laborable",
+    "Dia - Fin de semana",
+    "Noche - Fin de semana",
+]
+df["periodo"] = np.select(condiciones, etiquetas, default="Otro")
+
+def test_z(grupo1, grupo2, nombre1, nombre2):
+  n1 = len(grupo1)
+  n2 = len(grupo2)
+  lam_hat1 = grupo1.mean()
+  lam_hat2 = grupo2.mean()
+  se = np.sqrt(lam_hat1 / n1 + lam_hat2 / n2)
+  z_stat = (lam_hat1 - lam_hat2) / se
+  p_valor = 2 * stats.norm.sf(abs(z_stat))
+  p_txt = "<0.01" if p_valor < 0.01 else f"{p_valor:.2f}"
+
+  print(f"{nombre1} (λ={lam_hat1:.2f}, n={n1}) vs {nombre2} (λ={lam_hat2:.2f}, n={n2})")
+  print(f"   -> Z = {z_stat:.2f} | p-valor = {p_txt}\n")
+  return z_stat, p_valor
+
+# 1. Noche: entre semana vs fin de semana
+noche_laborable = df[df["periodo"] == "Noche - Dia laborable"]["conexiones"]
+noche_fin_semana = df[df["periodo"] == "Noche - Fin de semana"]["conexiones"]
+z1, p1 = test_z(noche_laborable, noche_fin_semana, "Noche entre semana", "Noche fin de semana")
+
+# 2. Día: entre semana vs fin de semana
+dia_laborable = df[df["periodo"] == "Dia - Dia laborable"]["conexiones"]
+dia_fin_semana = df[df["periodo"] == "Dia - Fin de semana"]["conexiones"]
+z2, p2 = test_z(dia_laborable, dia_fin_semana, "Día entre semana", "Día fin de semana")
+
+# 3. Dos horas del periodo con más tráfico
+punta = df[df["periodo"] == "Dia - Dia laborable"]
+h8 = punta[punta["hora"] == 8]["conexiones"]
+h18 = punta[punta["hora"] == 18]["conexiones"]
+z3, p3 = test_z(h8, h18, "Hora 8h", "Hora 18h")
+
+Consola: 
+
+Noche entre semana (λ=2.01, n=2400) vs Noche fin de semana (λ=2.03, n=960)
+   -> Z = -0.33 | p-valor = 0.74
+
+Día entre semana (λ=24.00, n=4800) vs Día fin de semana (λ=12.02, n=1920)
+   -> Z = 112.86 | p-valor = <0.01
+
+Hora 8h (λ=23.95, n=300) vs Hora 18h (λ=23.99, n=300)
+   -> Z = -0.11 | p-valor = 0.91
+   
 
 **3.4 Model Justification:**
 
@@ -195,61 +357,152 @@ The period-based model is adequate and statistically significant (p < 0.05 in al
 
 ```python
 # 4.1 Probabilities by period and weekly estimate
-lam_noche = df[df["periodo"] == "Noche"]["conexiones"].mean()
-lam_dia = df[df["periodo"] == "Dia"]["conexiones"].mean()
+import numpy as np
+import pandas as pd
+from scipy import stats
+from scipy.stats import binom, poisson
 
-p_noche = stats.poisson.sf(40, lam_noche)
-p_dia = stats.poisson.sf(40, lam_dia)
+df = pd.read_csv("https://raw.githubusercontent.com/ami232/nebrija-mpan/main/data/conexiones_web.csv")
 
-min_noche = len(df[df["periodo"] == "Noche"])
-min_dia = len(df[df["periodo"] == "Dia"])
+# Periodos: noche 24-8 h, día 8-24 h; laborable / fin de semana
+fin_semana = df["dia_semana"].isin(["sábado", "domingo"])
+dia = df["hora"] >= 8
 
-esperados_segmentado = (p_noche * min_noche) + (p_dia * min_dia)
-observados = len(df[df["conexiones"] > 40])
+grupos = {
+    "Día laborable": df[dia & (~fin_semana)],
+    "Día fin de semana": df[dia & fin_semana],
+    "Noche - Día laborable": df[(~dia) & (~fin_semana)],
+    "Noche - Fin de semana": df[(~dia) & fin_semana],
+}
 
-# P(at least 1 minute > 40 on a weekday)
-df_lab_dia = df[(df["periodo"] == "Dia") & (~df["dia_semana"].isin(["sábado", "domingo"]))]
-p_lab = stats.poisson.sf(40, df_lab_dia["conexiones"].mean())
-p_al_menos_uno = 1 - (1 - p_lab) ** 840  # 840 daytime minutes per weekday
+# 4.1 P(X > 40) en cada periodo y minutos esperados por semana
+filas = []
+for nombre, grupo in grupos.items():
+    lam_hat = grupo["conexiones"].mean()           # media estimada (λ)
+    p = stats.poisson.sf(40, lam_hat)              # P(X > 40)
+    filas.append({
+        "periodo": nombre,
+        "minutos": len(grupo),
+        "Media estimada": lam_hat,
+        "P(X > 40)": p,
+        "Minutos > 40 esperados": p * len(grupo),
+    })
 
-print(f"Expected per week (Segmented Model): {esperados_segmentado:.2f} min")
-print(f"Actual observed: {observados} min")
-print(f"P(at least 1 min > 40 on a weekday): {p_al_menos_uno:.4f}")
+tabla_40 = pd.DataFrame(filas).set_index("periodo")
+tabla_40 = tabla_40.round({"Media estimada": 4, "P(X > 40)": 3, "Minutos > 40 esperados": 4})
+display(tabla_40)
+
+esperados = sum(f["Minutos > 40 esperados"] for f in filas)
+observados = (df["conexiones"] > 40).sum()
+
+# P(al menos un minuto > 40 en un día laborable): 960 min de día y 480 de noche
+p_dia = filas[0]["P(X > 40)"]
+p_noche = filas[2]["P(X > 40)"]
+p_al_menos_uno = 1 - (1 - p_dia) ** (16 * 60) * (1 - p_noche) ** (8 * 60)
+
+print(f"Minutos > 40 esperados en la semana (modelo por periodos): {esperados:.2f}")
+print(f"Minutos > 40 observados en los datos: {observados}")
+print(f"P(al menos un minuto > 40 en un día laborable): {p_al_menos_uno:.4f} ({p_al_menos_uno*100:.1f} %)")
+
+Consola:
+
+periodo	              	minutos	 Media estimada	 P(X > 40)	Minutos > 40 esperados
+			
+Día laborable          4800	     24.0004	         0.001	    4.7371
+Día fin de semana	     1920	     12.0229	         0.000	    0.0000
+Noche - Día laborable	 2400	     2.0100	           0.000	    0.0000
+Noche - Fin de semana	 960	     2.0281	           0.000	    0.0000
+
+Minutos > 40 esperados en la semana (modelo por periodos): 4.74
+Minutos > 40 observados en los datos: 4
+P(al menos un minuto > 40 en un día laborable): 0.6124 (61.2 %)
 
 # 4.2 Unified Global Model
-lam_total = df["conexiones"].mean()
-esperados_global = stats.poisson.sf(40, lam_total) * len(df)
-print(f"Expected per week (Global Model): {esperados_global:.6f} min")
+# TODO: minutos esperados por semana por encima de 40 con un solo λ
+
+lambda_total = df["conexiones"].mean()   # λ único de toda la semana
+n_total = len(df)  # Minutos totales de la semana (10.080)
+
+p_total = stats.poisson.sf(40, lambda_total) # Utiliza distribución de Poisson con dicha media global para calcular probabilidad de que en un minuto cualquiera se superen las 40 conexiones
+esperados_total = n_total * p_total
+
+print(f"P(X > 40) con un solo λ = {p_total:.8f}")
+print(f"Minutos esperados por semana por encima de 40: {esperados_total:.4f}")
+
+Consola:
+P(X > 40) con un solo λ = 0.00000001
+Minutos esperados por semana por encima de 40: 0.0001
 
 # 4.3 Provider hypothesis test (H0: λ = 23 on a weekday)
-lam_0 = 23
-n_lab = len(df_lab_dia)
-lam_hat_lab = df_lab_dia["conexiones"].mean()
-z_prov = (lam_hat_lab - lam_0) / np.sqrt(lam_0 / n_lab)
-p_prov = 2 * stats.norm.sf(abs(z_prov))
-print(f"Provider Test (H0=23) -> observed λ: {lam_hat_lab:.2f} | Z: {z_prov:.2f} | p-value: {p_prov:.4e}")
+
+# TODO: contraste H0: λ_día laborable = 23
+
+fin_semana = df["dia_semana"].isin(["sábado", "domingo"])
+dia_lab_dia = df[
+    (df["hora"] >= 8) & (~fin_semana)
+]["conexiones"] # Filtra la tabla para quedarse con las filas que cumplen que el periodo sea "Día" y que el día de la semana NO sea ni "sábado" ni "domingo"
+
+lam_0 = 23  # Define el valor teórico que afirma el proveedor para usarlo como H0 que queremos contrastar
+n = len(dia_lab_dia) # Cuenta el tamaño de la muestra (nº total de min u observaciones que forman ese grupo de días laborables durante el día)
+lam_hat = dia_lab_dia.mean()
+
+# Test Z para una muestra con Poisson (varianza = media bajo H0)
+se = np.sqrt(lam_0 / n)
+z_val = (lam_hat - lam_0) / se
+p_val = 2 * stats.norm.sf(abs(z_val))
+
+print(f"λ estimado día laborable = {lam_hat:.2f} frente a H0: λ = {lam_0}")
+print(f"Z = {z_val:.2f}, p-valor = {p_val:.4f}")
+
+Consola:
+λ estimado día laborable = 24.00 frente a H0: λ = 23
+Z = 14.45, p-valor = 0.0000
+
 
 # 4.4 Marketing Campaign Impact (+20% traffic) and critical λ calculation
-lam_noche_inc = lam_noche * 1.2
-lam_dia_inc = lam_dia * 1.2
-esp_inc = (stats.poisson.sf(40, lam_noche_inc) * min_noche) + (stats.poisson.sf(40, lam_dia_inc) * min_dia)
-print(f"Expected (+20% traffic): {esp_inc:.2f} min/week")
+from scipy import stats
+from scipy.optimize import brentq
+df = pd.read_csv("https://raw.githubusercontent.com/ami232/nebrija-mpan/main/data/conexiones_web.csv")
 
-# Search for critical λ for 10 min/weekday of daytime saturation (840 daytime min/day)
-target_min = 10 / 840  # Required P(X > 40) per minute
-lam_critico = 20.0
-while stats.poisson.sf(40, lam_critico) < target_min:
-    lam_critico += 0.01
+# TODO: minutos por semana por encima de 40 con un 20 % más de tráfico
+fin_semana = df["dia_semana"].isin(["sábado", "domingo"])
+dia = df["hora"] >= 8
 
-print(f"Critical λ to have ≥10 saturated min/day: {lam_critico:.2f} connections/min")
+grupos = {
+    "Día laborable": df[dia & (~fin_semana)],
+    "Día fin de semana": df[dia & fin_semana],
+    "Noche - Día laborable": df[(~dia) & (~fin_semana)],
+    "Noche - Fin de semana": df[(~dia) & fin_semana],
+}
 
-Expected per week (Segmented Model): 0.27 min
-Actual observed: 4 min
-P(at least 1 min > 40 on a weekday): 0.5520
-Expected per week (Global Model): 0.000078 min
-Provider Test (H0=23) -> observed λ: 23.96 | Z: 12.94 | p-value: 2.6564e-38
-Expected (+20% traffic): 9.42 min/week
-Critical λ to have ≥10 saturated min/day: 27.92 connections/min
+filas = []
+for nombre, grupo in grupos.items():
+    lam = grupo["conexiones"].mean() * 1.2
+    p = stats.poisson.sf(40, lam)
+    filas.append({"periodo": nombre, "minutos": len(grupo), "λ (+20 %)": lam,
+                  "P(X > 40)": p, "Minutos > 40 esperados": p * len(grupo)})
+
+tabla_44 = pd.DataFrame(filas).set_index("periodo")
+tabla_44 = tabla_44.round({"λ (+20 %)": 4, "P(X > 40)": 4, "Minutos > 40 esperados": 4})
+display(tabla_44)
+print(f"Minutos > 40 esperados por semana con +20 %: {tabla_44['Minutos > 40 esperados'].sum():.2f}")
+
+# λ de día laborable a partir del cual se esperan 10 o más minutos al día por encima de 40
+p_objetivo = 10 / (16 * 60)
+lam_critico = brentq(lambda lam: stats.poisson.sf(40, lam) - p_objetivo, 10, 60)
+print(f"λ crítico de día entre semana: {lam_critico:.2f}")
+
+Consola:
+
+periodo                minutos	λ (+20 %)	P(X > 40)	Minutos > 40 esperados
+				
+Día laborable	         4800	    28.8005  	0.0187	  89.5558
+Día fin de semana	     1920	    14.4275  	0.0000	  0.0000
+Noche - Día laborable	 2400	    2.4120	  0.0000	  0.0000
+Noche - Fin de semana	 960	    2.4338	  0.0000	  0.0000
+
+Minutos > 40 esperados por semana con +20 %: 89.56
+λ crítico de día entre semana: 27.66
 ```
 
 **4.5 Infrastructure Interpretation:**
@@ -265,47 +518,129 @@ Critical λ to have ≥10 saturated min/day: 27.92 connections/min
 # the number of users who accept follows a Binomial distribution: Y ~ Binomial(N, p)
 
 # 5.2 Acceptance Rates by Period and 95% Confidence Intervals
-print("\n--- Cookie Acceptance Rates ---")
-for periodo, grupo in df.groupby("periodo"):
-    total_conn = grupo["conexiones"].sum()
-    total_cook = grupo["aceptan_cookies"].sum()
-    p_hat = total_cook / total_conn
-    se_prop = np.sqrt(p_hat * (1 - p_hat) / total_conn)
-    ic_l = round(p_hat - 1.96 * se_prop, 4)
-    ic_u = round(p_hat + 1.96 * se_prop, 4)
-    print(f"Period {periodo}: Rate = {p_hat:.4f} (95% CI: [{ic_l}, {ic_u}])")
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+
+# Aseguramos los 4 periodos correctos en el DataFrame
+fin_semana = df["dia_semana"].isin(["sábado", "domingo"])
+dia = (df["hora"].astype(int) >= 8) & (df["hora"].astype(int) < 24)
+
+condiciones = [
+    dia & (~fin_semana),
+    (~dia) & (~fin_semana),
+    dia & fin_semana,
+    (~dia) & (fin_semana),
+]
+
+etiquetas = [
+    "Dia - Dia laborable",
+    "Noche - Dia laborable",
+    "Dia - Fin de semana",
+    "Noche - Fin de semana",
+]
+df["periodo"] = np.select(condiciones, etiquetas, default="Otro")
+
+# TODO: tasa de aceptación por hora y por día de la semana (gráficos)
+tasa_hora = df.groupby("hora").apply(
+    lambda x: x["aceptan_cookies"].sum() / x["conexiones"].sum(),
+    include_groups=False
+)
+tasa_dia = df.groupby("dia_semana").apply(
+    lambda x: x["aceptan_cookies"].sum() / x["conexiones"].sum(),
+    include_groups=False
+)
+
+fig, axes = plt.subplots(1, 2, figsize=(12, 4))
+tasa_hora.plot(kind="line", marker="o", ax=axes[0], title="Tasa por Hora")
+axes[0].set_ylim(0,1)
+axes[0].tick_params(axis="x", rotation=0)
+tasa_dia.plot(kind="bar", ax=axes[1], title="Tasa por Día")
+axes[1].set_ylim(0,1)
+axes[1].tick_params(axis="x", rotation=0)
+plt.tight_layout()
+plt.show()
+
+# TODO: tasa de aceptación de cada uno de los 4 periodos con IC 95 %
+print("Tasa de Aceptación e IC 95% por periodo")
+for p in etiquetas:
+  sub = df[df["periodo"] == p]
+  k = sub["aceptan_cookies"].sum()
+  n = sub["conexiones"].sum()
+  if n > 0:
+    p_hat = k / n
+    se = np.sqrt(p_hat * (1 - p_hat) / n)
+    print(
+        f"{p:22s}: Tasa = {p_hat:.4f} | IC 95% = [{p_hat - 1.96*se:.4f}, {p_hat + 1.96*se:.4f}]"
+    )
+  else:
+    print(f"{p:22s}: Sin conexiones")
+
+Consola:
+Tasa de Aceptación e IC 95% por periodo
+Dia - Dia laborable   : Tasa = 0.7988 | IC 95% = [0.7965, 0.8011]
+Noche - Dia laborable : Tasa = 0.7931 | IC 95% = [0.7817, 0.8045]
+Dia - Fin de semana   : Tasa = 0.7998 | IC 95% = [0.7946, 0.8049]
+Noche - Fin de semana : Tasa = 0.8048 | IC 95% = [0.7872, 0.8224]
 
 # 5.3 Two-Proportion Tests
-def test_dos_proporciones(x1, n1, x2, n2):
-    p1 = x1 / n1
-    p2 = x2 / n2
-    p_pool = (x1 + x2) / (n1 + n2)
-    se = np.sqrt(p_pool * (1 - p_pool) * (1/n1 + 1/n2))
-    z = (p1 - p2) / se
-    p_val = 2 * stats.norm.sf(abs(z))
-    return z, p_val
+import numpy as np
+import pandas as pd
+from scipy import stats
 
-# (a) Day vs Night
-g_dia = df[df["periodo"] == "Dia"]
-g_noche = df[df["periodo"] == "Noche"]
-z_a, p_a = test_dos_proporciones(g_dia["aceptan_cookies"].sum(), g_dia["conexiones"].sum(),
-                                 g_noche["aceptan_cookies"].sum(), g_noche["conexiones"].sum())
+# Nos aseguramos de volver a tener la definición correcta de los 4 periodos
+fin_semana = df["dia_semana"].isin(["sábado", "domingo"])
+dia = (df["hora"] >= 8) & (df["hora"] < 24)
 
-# (b) Weekday vs Weekend (during daytime hours)
-g_dia_lab = df[(df["periodo"] == "Dia") & (~df["dia_semana"].isin(["sábado", "domingo"]))]
-g_dia_fin = df[(df["periodo"] == "Dia") & (df["dia_semana"].isin(["sábado", "domingo"]))]
-z_b, p_b = test_dos_proporciones(g_dia_lab["aceptan_cookies"].sum(), g_dia_lab["conexiones"].sum(),
-                                 g_dia_fin["aceptan_cookies"].sum(), g_dia_fin["conexiones"].sum())
+condiciones = [
+    dia & (~fin_semana),
+    (~dia) & (~fin_semana),
+    dia & fin_semana,
+    (~dia) & (fin_semana),
+]
 
-print(f"\nTest (a) Day vs Night -> Z: {z_a:.2f} | p-value: {p_a:.4e}")
-print(f"Test (b) Weekday vs Weekend (Day) -> Z: {z_b:.2f} | p-value: {p_b:.4e}")
+etiquetas = [
+    "Dia - Dia laborable",
+    "Noche - Dia laborable",
+    "Dia - Fin de semana",
+    "Noche - Fin de semana",
+]
+df["periodo"] = np.select(condiciones, etiquetas, default="Otro")
 
+# TODO: contraste de dos proporciones, día frente a noche
+# Juntamos los datos de día (laborable y finde) y de noche (laborable y finde)
+k_dia = df[df["periodo"].isin(["Dia - Dia laborable", "Dia - Fin de semana"])]["aceptan_cookies"].sum()
+n_dia = df[df["periodo"].isin(["Dia - Dia laborable", "Dia - Fin de semana"])]["conexiones"].sum()
 
-Period Dia: Rate = 0.7977 (95% CI: [0.7954, 0.7999])
-Period Noche: Rate = 0.8047 (95% CI: [0.7997, 0.8097])
+k_noche = df[df["periodo"].isin(["Noche - Dia laborable", "Noche - Fin de semana"])]["aceptan_cookies"].sum()
+n_noche = df[df["periodo"].isin(["Noche - Dia laborable", "Noche - Fin de semana"])]["conexiones"].sum()
 
-Test (a) Day vs Night -> Z: -2.49 | p-value: 1.2821e-02
-Test (b) Weekday vs Weekend (Day) -> Z: 0.14 | p-value: 8.9209e-01
+# Proporción conjunta y Z-test
+p_p = (k_dia + k_noche) / (n_dia + n_noche)
+se = (p_p * (1 - p_p) * (1 / n_dia + 1 / n_noche)) ** 0.5
+z = (k_dia / n_dia - k_noche / n_noche) / se
+p_val = 2 * (1 - stats.norm.cdf(abs(z)))
+
+print(f"Día vs Noche: Z = {z:.2f}, p-valor = {p_val:.4f}")
+
+# TODO: contraste de dos proporciones, día laborable frente a día de fin de semana
+k_lab = df[df["periodo"] == "Dia - Dia laborable"]["aceptan_cookies"].sum()
+n_lab = df[df["periodo"] == "Dia - Dia laborable"]["conexiones"].sum()
+
+k_finde = df[df["periodo"] == "Dia - Fin de semana"]["aceptan_cookies"].sum()
+n_finde = df[df["periodo"] == "Dia - Fin de semana"]["conexiones"].sum()
+
+# Proporción conjunta y Z-test
+p_p2 = (k_lab + k_finde) / (n_lab + n_finde)
+se2 = (p_p2 * (1 - p_p2) * (1 / n_lab + 1 / n_finde)) ** 0.5
+z2 = (k_lab / n_lab - k_finde / n_finde) / se2
+p_val2 = 2 * (1 - stats.norm.cdf(abs(z2)))
+
+print(f"Día Laborable vs Día Finde: Z = {z2:.2f}, p-valor = {p_val2:.4f}")
+
+Consola:
+Día vs Noche: Z = 0.49, p-valor = 0.6219
+Día Laborable vs Día Finde: Z = -0.34, p-valor = 0.7306
 ```
 
 ## 6. Business Conclusions
